@@ -1,0 +1,39 @@
+{
+
+  "manifest_version": 2,
+  "name": "Barnvakt",
+  "version": "1.0",
+  "description": "",
+  "icons": {
+    "48": "icons/logo.png",
+    "96": "icons/logo@2x.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.svtplay.se/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "/node_modules/@sentry/browser/build/bundle.min.js",
+        "/node_modules/moment/min/moment.min.js",
+        "barnvakten.js"
+      ]
+    }
+  ],
+  "background": {
+    "scripts": [
+      "background-script.js"
+    ]
+  },
+  "permissions": [],
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true,
+    "chrome_style": true,
+    "open_in_tab": true
+  },
+  "browser_action": {
+    "default_icon": "icons/logo.png"
+  }
+}
