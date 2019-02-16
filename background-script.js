@@ -1,32 +1,29 @@
-
-/*
-Log that we received the message.
-Then display a notification. The notification contains the URL,
-which we read from the message.
-*/
-function notify(message) {
-    if(typeof browser !== 'undefined'){
-        browser.notifications.create({
-            'type': 'basic',
-            'iconUrl': browser.extension.getURL('icons/logo@2x.png'),
-            'title': 'Titta klart',
-            'message':  message.daysLeft
-        });
-
-    } else if(typeof chrome !== 'undefined'){
-        chrome.notifications.create('days-left', {
-            'type': 'basic',
-            'iconUrl': 'icons/logo@2x.png',
-            'title': 'Titta klart',
-            'message':  message.daysLeft
-        }, function (id) {
-            chrome.notifications.clear(id)
-        })
-    }
-}
-
-if(typeof browser !== 'undefined') {
-    browser.runtime.onMessage.addListener(notify);
+if(typeof browser !== 'undefined'){
+    browser.browserAction.onClicked.addListener(() => {
+        console.log('start')
+    });
 } else if(typeof chrome !== 'undefined'){
-    chrome.runtime.onMessage.addListener(notify);
+    chrome.browserAction.onClicked.addListener(() => {
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.storage.sync.get('playlist', function(result) {
+                console.log(result)
+                chrome.tabs.sendMessage(tabs[0].id, {nextUrl: result.playlist[0], nextIndex: 1}, function(response) {
+                    console.log('response?', response);
+                });
+            });
+        });
+    });
 }
+
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        console.log("Message from the content script: " + request.index);
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            chrome.storage.sync.get('playlist', function(result) {
+                console.log(result)
+                chrome.tabs.sendMessage(tabs[0].id, {nextUrl: result.playlist[request.index], nextIndex: request.index + 1}, function(response) {
+                    console.log('response?', response);
+                });
+            });
+        });
+    });

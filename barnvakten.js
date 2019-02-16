@@ -1,9 +1,7 @@
-console.log('barnvakten')
+console.log('barnvakt')
 const VERSION = '1.0.0';
-const TITTA_KLART_API_URL = 'https://titta-klart-api.now.sh';
-const SVT_VIDEO_API_URL = 'https://api.svt.se/videoplayer-api/video/';
+const SEARCH_KEY = 'barnvaktIndex';
 
-let GLOBAL_IS_NOTIFIED = false;
 //Sentry.init({
 //    dsn: 'https://119e710167b34a6a877b58ad0610f6f7@sentry.io/1381535'
 //});
@@ -11,14 +9,32 @@ let GLOBAL_IS_NOTIFIED = false;
 //    scope.setTag("version", VERSION);
 //});
 
-const queue = [
-    "https://www.svtplay.se/video/2520376/pippi-langstrump/pippi-langstrump-sasong-1-avsnitt-1",
-    "https://www.youtube.com/watch?v=BQxo3LR_lWY",
-    "https://www.oppetarkiv.se/video/10678783/bamse-varldens-starkaste-bjorn-sasong-1-avsnitt-2-av-7",
-    "https://www.svtplay.se/video/19323091/greta-gris/greta-gris-sasong-7-zoo"
-];
+let queue = [];
 
-function start(){
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        console.log(request)
+        const nextUrl = request.nextUrl;
+        const nextIndex = request.nextIndex;
+        start(nextUrl, nextIndex);
+        sendResponse({done: true});
+    });
+
+
+
+function getIndexFromUrl(name){
+    const url = window.location.href;
+    name = name.replace(/[\[\]]/g, '\\$&');
+    const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+
+    return parseInt(decodeURIComponent(results[2].replace(/\+/g, ' ')));
+}
+
+function playVideo(currentIndex){
+    console.log('play', currentIndex)
     const videoEl = document.querySelector('video');
     const svtPlayBtn = document.querySelectorAll('.svp_js-splash--btn-play')[0];
 
@@ -26,47 +42,49 @@ function start(){
         console.log(videoEl, svtPlayBtn)
         if(svtPlayBtn){
             svtPlayBtn.click()
+            console.log('click');
         } else {
             videoEl.play();
         }
 
-        videoEl.addEventListener("canplay", () => {
-            console.log('canplay')
-        }, true);
-
-        videoEl.addEventListener("loadeddata", () => {
-            console.log('loadeddata')
-        }, true);
-
-        let index = parseInt(location.search.slice(1).split('=')[1]);
-        console.log('index', index);
-        if (!document.fullscreenElement) {
-            videoEl.requestFullscreen().then({}).catch(err => {
-                console.log(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-                const svtFullScreenBtn = document.querySelectorAll('.svp_js-controls-btn--fullscreen')[0];
-                console.log(svtFullScreenBtn)
-                if(svtFullScreenBtn){
-                    svtFullScreenBtn.click()
-                }
-            });
-        } else {
-            document.exitFullscreen();
-        }
+        videoEl.currentTime = videoEl.duration - 15;
+        videoEl.play();
 
         videoEl.addEventListener("timeupdate", () => {
-            console.log('timeupdate')
+            console.log('timeupdate');
             if(videoEl.duration - videoEl.currentTime < 10){
-                videoEl.pause();
-                const newUrl = queue[index + 1] + '?barnvaktIndex=' + (index + 1);
-                console.log('paused', newUrl)
-                location.href = newUrl;
+                //videoEl.pause();
+                getNextUrl(currentIndex + 1);
             }
         }, true);
     }
 }
 
+function start(nextUrl, nextIndex){
+    if(nextUrl){
+        const nextUrlObject = new URL(nextUrl);
+        const nextUrlAsString = nextUrlObject.toString();
+        const separator = nextUrlObject.search ? '&' : '?';
+        console.log('nextUrl', nextUrlAsString);
 
+        location.href = `${nextUrlAsString}${separator}${SEARCH_KEY}=${nextIndex}`;
+    } else {
+        console.log('done')
+    }
+}
+
+function getNextUrl(nextIndex){
+    console.log(queue, nextIndex);
+
+    chrome.runtime.sendMessage({index: nextIndex}, function(response) {
+        console.log(response)
+    });
+}
 
 setTimeout(function(){
-    start();
-}, 2000)
+    const index = getIndexFromUrl(SEARCH_KEY);
+
+    if(typeof index === 'number'){
+        playVideo(index);
+    }
+}, 4000);
