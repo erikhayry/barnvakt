@@ -21,8 +21,12 @@ module.exports = {
     },
     plugins: [
         new HtmlWebPackPlugin({
-            template: "./src/index.html",
-            filename: "./index.html"
+            template: "./src/popup.html",
+            filename: "./popup.html"
+        }),
+        new HtmlWebPackPlugin({
+            template: "./src/options.html",
+            filename: "./options.html"
         })
     ]
 };

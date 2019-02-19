@@ -37,7 +37,7 @@ class PlaylistContainer extends Component {
 
         chrome.storage.sync.set({
             playlist: [...playlist.slice(0, index), ...playlist.slice(index + 1)]
-    }, function() {
+        }, function() {
             that.restore()
         });
     }
