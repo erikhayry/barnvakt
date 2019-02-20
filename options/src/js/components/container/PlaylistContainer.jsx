@@ -1,6 +1,29 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import Input from "../presentational/Input.jsx";
+import {
+    SortableContainer,
+    SortableElement,
+    arrayMove,
+} from 'react-sortable-hoc';
+
+const SortableItem = SortableElement(({value, sortIndex, onRemove}) => <li>
+    {value} <button onClick={() => {
+        onRemove(sortIndex)
+    }}>Ta bort</button>
+    </li>);
+
+const SortableList = SortableContainer(({items, onRemove}) => {
+    return (
+        <ul>
+            {items.map((value, index) => (
+                <SortableItem key={`item-${index}`} index={index} value={value} onRemove={onRemove} sortIndex={index}
+                />
+            ))}
+        </ul>
+    );
+});
+
 class PlaylistContainer extends Component {
     constructor() {
         super();
@@ -10,6 +33,8 @@ class PlaylistContainer extends Component {
         };
         this.handleChange = this.handleChange.bind(this);
         this.handleAdd = this.handleAdd.bind(this);
+        this.onSortEnd = this.onSortEnd.bind(this);
+        this.handleRemove = this.handleRemove.bind(this);
     }
 
     restore(){
@@ -31,6 +56,7 @@ class PlaylistContainer extends Component {
     }
 
     handleRemove(index) {
+        console.log('handle remove', index)
         let that = this;
         const { playlist } = this.state;
         console.log('handleRemove', index, playlist)
@@ -53,18 +79,24 @@ class PlaylistContainer extends Component {
         });
     }
 
+    onSortEnd({oldIndex, newIndex}) {
+        let that = this;
+
+        this.setState(({playlist = []}) => ({
+            playlist: arrayMove(playlist, oldIndex, newIndex),
+        }), () => {
+            chrome.storage.sync.set({
+                playlist: that.state.playlist
+            });
+        });
+    };
+
     render() {
         const { playlist, newItem } = this.state;
         return (
             <>
-                <ul>
-                    {playlist.map((item, i) =>
-                        <li key={i}>
-                            {item} <button onClick={() => {
-                                this.handleRemove(i)
-                        }}>Ta bort</button>
-                        </li>)}
-                </ul>
+                <SortableList items={playlist} onSortEnd={this.onSortEnd} onRemove={this.handleRemove}/>
+
                 <Input
                     text="URL"
                     label="url"
