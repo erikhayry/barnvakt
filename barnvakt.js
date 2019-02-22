@@ -1,29 +1,28 @@
-console.log('barnvakt')
+
 const VERSION = '1.0.0';
 const SEARCH_KEY = 'barnvaktIndex';
 
-//Sentry.init({
-//    dsn: 'https://119e710167b34a6a877b58ad0610f6f7@sentry.io/1381535'
-//});
-//Sentry.configureScope((scope) => {
-//    scope.setTag("version", VERSION);
-//});
+Sentry.init({
+    dsn: 'https://fec2d6f8d43a488286b76e2ecc469e99@sentry.io/1399736'
+});
+Sentry.configureScope((scope) => {
+    scope.setTag("version", VERSION);
+});
 
-chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-        const { message } = request;
-        if(message === 'start'){
-            chrome.storage.sync.set({
-                isRunning: true
-            }, function() {
-                getPlaylist().then((playlist) => {
-                    const nextUrl = buildUrl(playlist, 0);
-                    goToNext(nextUrl);
-                });
+function onMessage(request){
+    const { message } = request;
+    if(message === 'start'){
+        browser.storage.sync.set({
+            isRunning: true
+        }).then(() => {
+            getPlaylist().then((playlist) => {
+                const nextUrl = buildUrl(playlist, 0);
+                goToNext(nextUrl);
             });
-        }
+        });
     }
-);
+}
+
 function getIndexFromUrl(name){
     const url = window.location.href;
     name = name.replace(/[\[\]]/g, '\\$&');
@@ -36,38 +35,32 @@ function getIndexFromUrl(name){
 }
 
 function playVideo(nextUrl){
-    console.log('play', nextUrl)
     const videoEl = document.querySelector('video');
-    const svtPlayBtn = document.querySelectorAll('.svp_js-splash--btn-play')[0];
+    const svtPlayBtn = document.querySelectorAll('.svp_js-splash--btn-play')[0] || document.querySelectorAll('.bp_featured-episode__button')[0];
 
-    if(videoEl){
-        console.log(videoEl, svtPlayBtn)
+    if(videoEl || svtPlayBtn){
         if(svtPlayBtn){
+            //TODO handle video loading
             svtPlayBtn.click()
-            console.log('click');
         } else {
             videoEl.play();
         }
 
         //only debug
         try{
-            console.log(videoEl.currentTime, videoEl.duration - 15);
             videoEl.currentTime = videoEl.duration - 15;
             videoEl.play();
         } catch{
-            console.log('Unable to play')
             goToNext(nextUrl);
         }
 
-        videoEl.addEventListener("timeupdate", () => {
+        videoEl.addEventListener('timeupdate', () => {
             if(videoEl.duration - videoEl.currentTime < 10){
-                console.log('timeupdate');
                 videoEl.pause();
                 goToNext(nextUrl);
             }
         }, true);
     } else {
-        console.log('no video');
         goToNext(nextUrl);
     }
 }
@@ -77,30 +70,32 @@ function goToNext(nextUrl){
     if(nextUrl){
         location.href = nextUrl;
     } else {
-        console.log('done')
         stop();
     }
 }
 
 function getPlaylist(){
-    return new Promise(function(resolve, reject) {
-        chrome.storage.sync.get('playlist', function(result) {
-            const { playlist = [] } = result;
-            resolve(playlist)
-        });
+    return new Promise((resolve) => {
+        browser.storage.sync.get('playlist')
+            .then((result) => {
+                const { playlist = [] } = result;
+                resolve(playlist)
+            });
     });
 }
 
 function isRunning() {
-    return new Promise(function(resolve, reject) {
-        chrome.storage.sync.get('isRunning', function(result) {
-            const { isRunning } = result;
-            if(isRunning){
-                resolve()
-            } else {
-                reject()
-            }
-        });
+    return new Promise((resolve, reject) => {
+        browser.storage.sync.get('isRunning')
+            .then((result) => {
+                console.log('isr', result);
+                const { isRunning } = result;
+                if(isRunning){
+                    resolve()
+                } else {
+                    reject()
+                }
+            });
     });
 }
 
@@ -118,26 +113,26 @@ function buildUrl(playlist = [], index = 0){
 }
 
 function stop(){
-    chrome.storage.sync.set({
+    browser.storage.sync.set({
         isRunning: false
-    }, function(){
-        console.log('stoppped')
+    }).then(() => {
+        console.log('stopped')
     })
 }
 
+browser.runtime.onMessage.addListener(onMessage);
 
-setTimeout(function(){
+setTimeout(() => {
     const index = getIndexFromUrl(SEARCH_KEY);
 
     if(typeof index === 'number'){
         isRunning().then(() =>{
-            console.log('send req to bg', index);
             getPlaylist().then((playlist) => {
                 const nextUrl = buildUrl(playlist, index + 1);
                 playVideo(nextUrl);
             });
         }).catch(() => {
-            console.log('not started')
+            console.log('Barnvakt not running')
         })
     } else {
         stop()

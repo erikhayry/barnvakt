@@ -1,5 +1,6 @@
-import React, { Component } from "react";
-import ReactDOM from "react-dom";
+import browser from "webextension-polyfill";
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 class PopupContainer extends Component {
     constructor() {
         super();
@@ -11,15 +12,15 @@ class PopupContainer extends Component {
                 <ul>
                     <li>
                         <button onClick={() => {
-                            chrome.tabs.query({currentWindow: true, active: true}, function (tabs){
-                                var activeTab = tabs[0];
-                                chrome.tabs.sendMessage(activeTab.id, {"message": "start"});
+                            browser.tabs.query({currentWindow: true, active: true}).then((tabs) => {
+                                let activeTab = tabs[0];
+                                browser.tabs.sendMessage(activeTab.id, {'message': 'start'});
                             });
                         }}>Start</button>
                     </li>
                     <li>
                         <button onClick={() => {
-                            chrome.runtime.openOptionsPage()
+                            browser.runtime.openOptionsPage()
                         }}>
                             Options
                         </button>
@@ -32,7 +33,7 @@ class PopupContainer extends Component {
 }
 export default PopupContainer;
 
-document.addEventListener("DOMContentLoaded", function() {
-    const wrapper = document.getElementById("popup-container");
+document.addEventListener('DOMContentLoaded', function() {
+    const wrapper = document.getElementById('popup-container');
     wrapper ? ReactDOM.render(<PopupContainer />, wrapper) : false;
 });

@@ -13,22 +13,19 @@
         "*://*/*"
       ],
       "js": [
-        "barnvakten.js"
+        "/node_modules/webextension-polyfill/dist/browser-polyfill.min.js",
+        "/node_modules/@sentry/browser/build/bundle.min.js",
+        "barnvakt.js"
       ]
     }
   ],
-  "background": {
-    "scripts": [
-      "background-script.js"
-    ]
-  },
   "permissions": ["storage", "activeTab"],
   "browser_action": {
     "default_icon": "icons/logo.png",
-    "default_popup": "/options/dist/popup.html"
+    "default_popup": "/ui/dist/popup.html"
   },
   "options_ui": {
-    "page": "/options/dist/options.html",
+    "page": "/ui/dist/options.html",
     "open_in_tab": true
   }
 }

@@ -1,17 +1,13 @@
 {
   "name": "barnvakt",
   "version": "1.0.0",
-  "description": "Web extension for SVT Play telling you at what speed you need to watch a series before it's pulled from the website",
+  "description": "",
   "main": "barnvakt.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/erikportin/barnvakt.git"
   },
   "keywords": [
-    "svtplay",
     "web-extension"
   ],
   "author": "Erik Portin <erikportin@gmail.com>",
@@ -21,7 +17,7 @@
   },
   "homepage": "https://github.com/erikportin/barnvakt#readme",
   "dependencies": {
-    "react": "^16.8.2",
-    "react-dom": "^16.8.2"
+    "@sentry/browser": "^4.6.3",
+    "webextension-polyfill": "^0.4.0"
   }
 }
