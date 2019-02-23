@@ -2,8 +2,20 @@
   "name": "ui",
   "version": "1.0.0",
   "description": "",
+  "watch": {
+    "build": {
+      "patterns": ["src"],
+      "extensions": "js,jsx,html",
+      "quiet": false,
+      "legacyWatch": true,
+      "delay": 2500,
+      "runOnChangeOnly": true
+    }
+  },
+
   "scripts": {
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "watch": "npm-watch"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +27,7 @@
     "babel-loader": "^8.0.5",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
+    "npm-watch": "^0.6.0",
     "prop-types": "^15.7.2",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",

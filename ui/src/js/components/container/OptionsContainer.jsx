@@ -6,11 +6,13 @@ import {
     SortableElement,
     arrayMove,
 } from 'react-sortable-hoc';
-import { List, Segment, Button, Form } from 'semantic-ui-react'
+import { List, Segment, Button, Form, Divider, Container, Header } from 'semantic-ui-react'
 
 const SortableItem = SortableElement(({value, sortIndex, onRemove}) =>
     <List.Item>
-        <List.Content>
+        <List.Content style={{
+            marginBottom: 10
+        }}>
         {value}
         </List.Content>
         <List.Content floated='right'>
@@ -101,15 +103,18 @@ class OptionsContainer extends Component {
     render() {
         const { playlist, newPlaylistItem } = this.state;
         return (
-            <>
+            <Container text>
+                <Header as='h1'>Barnvakt</Header>
+
                 <SortableList items={playlist} onSortEnd={this.onSortEnd} onRemove={this.onRemove}/>
+                <Divider />
                 <Form onSubmit={this.onSave}>
-                    <Form.Group>
+                    <Form.Field>
                         <Form.Input placeholder='url' name='newPlaylistItem' label='Lägg till adress' value={newPlaylistItem} onChange={this.onInputChange} />
-                        <Form.Button content='Submit' />
-                    </Form.Group>
+                    </Form.Field>
+                    <Form.Button floated='right' content='Lägg till' />
                 </Form>
-            </>
+            </Container>
         );
     }
 }
