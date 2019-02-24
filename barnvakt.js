@@ -2,6 +2,13 @@
 const VERSION = '1.0.0';
 const SEARCH_KEY = 'barnvaktIndex';
 
+const exampleList = [
+    'https://www.svtplay.se/video/19323091/greta-gris/greta-gris-sasong-7-zoo',
+    'https://www.youtube.com/watch?v=BQxo3LR_lWY',
+    'https://www.oppetarkiv.se/video/10678783/bamse-varldens-starkaste-bjorn-sasong-1-avsnitt-2-av-7',
+    'https://www.youtube.com/watch?v=3iUmE9Vt1Qk'
+];
+
 Sentry.init({
     dsn: 'https://fec2d6f8d43a488286b76e2ecc469e99@sentry.io/1399736'
 });
@@ -34,9 +41,18 @@ function getIndexFromUrl(name){
     return parseInt(decodeURIComponent(results[2].replace(/\+/g, ' ')));
 }
 
+function setFullScreen(videoEl){
+    videoEl.style.position = 'fixed';
+    videoEl.style.left = '0';
+    videoEl.style.top = '0';
+    videoEl.style.width = '100%;';
+    videoEl.style.heigh = '100%;';
+    videoEl.style.zIndex = '99999';
+}
+
 function playVideo(nextUrl){
     const videoEl = document.querySelector('video');
-    const svtPlayBtn = document.querySelectorAll('.svp_js-splash--btn-play')[0] || document.querySelectorAll('.bp_featured-episode__button')[0];
+    const svtPlayBtn = document.querySelectorAll('.svp_js-splash--btn-play')[0];
 
     if(videoEl || svtPlayBtn){
         if(svtPlayBtn){
@@ -47,19 +63,25 @@ function playVideo(nextUrl){
         }
 
         //only debug
-        try{
-            videoEl.currentTime = videoEl.duration - 15;
-            videoEl.play();
-        } catch{
+        //try{
+        //    videoEl.currentTime = videoEl.duration - 15;
+        //    videoEl.play();
+        //} catch{
+        //    goToNext(nextUrl);
+        //}
+
+        if(videoEl){
+            setFullScreen(videoEl)
+            videoEl.addEventListener('timeupdate', () => {
+                if(videoEl.duration - videoEl.currentTime < 10){
+                    videoEl.pause();
+                    goToNext(nextUrl);
+                }
+            }, true);
+        } else {
             goToNext(nextUrl);
         }
 
-        videoEl.addEventListener('timeupdate', () => {
-            if(videoEl.duration - videoEl.currentTime < 10){
-                videoEl.pause();
-                goToNext(nextUrl);
-            }
-        }, true);
     } else {
         goToNext(nextUrl);
     }
@@ -88,7 +110,6 @@ function isRunning() {
     return new Promise((resolve, reject) => {
         browser.storage.sync.get('isRunning')
             .then((result) => {
-                console.log('isr', result);
                 const { isRunning } = result;
                 if(isRunning){
                     resolve()
@@ -116,7 +137,7 @@ function stop(){
     browser.storage.sync.set({
         isRunning: false
     }).then(() => {
-        console.log('stopped')
+        console.log('Barnvakt stopped')
     })
 }
 
@@ -127,10 +148,11 @@ setTimeout(() => {
 
     if(typeof index === 'number'){
         isRunning().then(() =>{
-            getPlaylist().then((playlist) => {
-                const nextUrl = buildUrl(playlist, index + 1);
-                playVideo(nextUrl);
-            });
+            getPlaylist()
+                .then((playlist) => {
+                    const nextUrl = buildUrl(playlist, index + 1);
+                    playVideo(nextUrl);
+                });
         }).catch(() => {
             console.log('Barnvakt not running')
         })

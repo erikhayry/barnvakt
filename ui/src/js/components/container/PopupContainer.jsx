@@ -6,15 +6,29 @@ import { Button } from 'semantic-ui-react'
 class PopupContainer extends Component {
     constructor() {
         super();
+        this.state = {
+            playlist: []
+        };
+        browser.storage.sync.get = browser.storage.sync.get.bind(this);
+    }
+
+    componentDidMount() {
+        browser.storage.sync.get('playlist')
+            .then((result) => {
+                this.setState({
+                    playlist: result.playlist || []
+                });
+            });
     }
 
     render() {
+        const { playlist } = this.state;
         return (
             <div >
                 <Button.Group vertical style={{
                     display: 'inline-block'
                 }}>
-                    <Button
+                    {playlist.length > 0 && <Button
                         fluid
                         color='green'
                         onClick={() => {
@@ -25,7 +39,7 @@ class PopupContainer extends Component {
                         }}
                     >
                         Starta spellista
-                    </Button>
+                    </Button>}
                     <Button
                         fluid
                         onClick={() => {

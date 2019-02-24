@@ -6,7 +6,9 @@ import {
     SortableElement,
     arrayMove,
 } from 'react-sortable-hoc';
-import { List, Segment, Button, Form, Divider, Container, Header } from 'semantic-ui-react'
+import { List, Segment, Button, Form, Divider, Container, Header, Message } from 'semantic-ui-react'
+
+const INVALID_URL = 'invalid-url';
 
 const SortableItem = SortableElement(({value, sortIndex, onRemove}) =>
     <List.Item>
@@ -16,7 +18,9 @@ const SortableItem = SortableElement(({value, sortIndex, onRemove}) =>
         {value}
         </List.Content>
         <List.Content floated='right'>
-            <Button onClick={onRemove}>Radera</Button>
+            <Button onClick={() =>
+                onRemove(sortIndex)
+            }>Radera</Button>
         </List.Content>
     </List.Item>);
 
@@ -42,7 +46,8 @@ class OptionsContainer extends Component {
         super();
         this.state = {
             playlist: [],
-            newPlaylistItem: ''
+            newPlaylistItem: '',
+            error: ''
         };
         this.onInputChange = this.onInputChange.bind(this);
         this.onSortEnd = this.onSortEnd.bind(this);
@@ -57,7 +62,8 @@ class OptionsContainer extends Component {
             .then((result) => {
                 this.setState({
                     playlist: result.playlist || [],
-                    newPlaylistItem: ''
+                    newPlaylistItem: '',
+                    error: ''
                 });
             });
     }
@@ -83,11 +89,19 @@ class OptionsContainer extends Component {
     onSave() {
         const { playlist, newPlaylistItem } = this.state;
 
-        browser.storage.sync.set({
-            playlist: [...playlist, newPlaylistItem]
-        }).then(() => {
-            this.restore()
-        });
+        try{
+            new URL(newPlaylistItem);
+            browser.storage.sync.set({
+                playlist: [...playlist, newPlaylistItem]
+            }).then(() => {
+                this.restore()
+            });
+        } catch {
+            this.setState({
+                error: INVALID_URL
+            })
+        }
+
     }
 
     onSortEnd({oldIndex, newIndex}) {
@@ -101,17 +115,35 @@ class OptionsContainer extends Component {
     };
 
     render() {
-        const { playlist, newPlaylistItem } = this.state;
+        const { playlist, newPlaylistItem, error } = this.state;
         return (
             <Container text>
                 <Header as='h1'>Barnvakt</Header>
+                <p>
+                    För att starta spellista. Gå in på valfri adress och tryck på ikonen till höger om adressfältet. Välj "Starta spellista".
+                </p>
+
+                <Divider />
 
                 <SortableList items={playlist} onSortEnd={this.onSortEnd} onRemove={this.onRemove}/>
+
                 <Divider />
-                <Form onSubmit={this.onSave}>
+
+                <Form onSubmit={this.onSave} error={error === INVALID_URL}>
                     <Form.Field>
-                        <Form.Input placeholder='url' name='newPlaylistItem' label='Lägg till adress' value={newPlaylistItem} onChange={this.onInputChange} />
+                        <Form.Input
+                            placeholder='url'
+                            name='newPlaylistItem'
+                            label='Lägg till adress'
+                            value={newPlaylistItem}
+                            onChange={this.onInputChange}
+                        />
                     </Form.Field>
+                    {error === INVALID_URL && <Message
+                        error
+                        header='Fel format'
+                        content='Webbadressen du försöker lägga till verkar vara i fel format.'
+                    />}
                     <Form.Button floated='right' content='Lägg till' />
                 </Form>
             </Container>
